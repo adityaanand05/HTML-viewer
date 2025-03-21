@@ -1,0 +1,711 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8"></meta>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"></meta>
+    <title>Modern Code Editor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closetag.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/edit/closebrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/xml-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/html-hint.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.8/standalone.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.8/parser-html.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.8/parser-css.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prettier/2.8.8/parser-babel.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/hint/show-hint.min.css" rel="stylesheet">
+    <style>
+        /* Modern CSS Variables */
+        :root {
+            --surface-1: #ffffff;
+            --surface-2: #f8fafc;
+            --text-1: #0f172a;
+            --text-2: #475569;
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --radius-1: 1rem;
+            --radius-2: 1.5rem;
+            --shadow-color: 220 3% 15%;
+            --shadow-strength: 1%;
+            --shadow-1: 0 1px 3px -1px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 9%)),
+                        0 3px 8px -3px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 7%));
+            --shadow-2: 0 4px 6px -4px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 11%)),
+                        0 8px 16px -6px hsl(var(--shadow-color) / calc(var(--shadow-strength) + 9%));
+            --shadow-inset: inset 0 1px 3px 0 hsl(var(--shadow-color) / calc(var(--shadow-strength) + 9%));
+        }
+
+        .dark-mode {
+            --surface-1: #0f172a;
+            --surface-2: #1e293b;
+            --text-1: #f8fafc;
+            --text-2: #94a3b8;
+            --shadow-color: 220 40% 2%;
+            --shadow-strength: 25%;
+            color: var(--text-1);
+            background: var(--surface-1);
+        }
+
+        .light-mode {
+            color: var(--text-1);
+            background: var(--surface-2);
+        }
+
+        /* Modern Neumorphic Container */
+        .editor-container {
+            background: var(--surface-2);
+            border-radius: var(--radius-2);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-2),
+                       inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        
+        .editor-container:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Modern CodeMirror */
+        .CodeMirror {
+            border-radius: var(--radius-1);
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            font-size: 14px;
+            background: var(--surface-1);
+            box-shadow: var(--shadow-1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .CodeMirror:hover {
+            box-shadow: var(--shadow-2);
+            transform: translateY(-2px);
+        }
+
+        /* Modern Console */
+        .console-output {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--surface-1);
+            border-radius: var(--radius-1);
+            box-shadow: var(--shadow-inset);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .console-output .error,
+        .console-output .warn,
+        .console-output .info {
+            margin: 0.5rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            background: var(--surface-2);
+            box-shadow: var(--shadow-1);
+            border-left: 4px solid currentColor;
+            transition: transform 0.2s ease;
+        }
+
+        .console-output .error:hover,
+        .console-output .warn:hover,
+        .console-output .info:hover {
+            transform: translateX(4px);
+        }
+
+        /* Modern Buttons */
+        button {
+            background: var(--surface-2);
+            color: var(--text-1);
+            border-radius: var(--radius-1);
+            padding: 0.75rem 1.5rem;
+            font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow-1);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-2);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.5s ease;
+        }
+
+        button:hover::before {
+            transform: translateX(100%);
+        }
+
+        /* Modern Tabs */
+        button[data-tab] {
+            background: transparent;
+            box-shadow: none;
+            border: none;
+            font-weight: 600;
+            color: var(--text-2);
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        button[data-tab]:hover {
+            color: var(--primary);
+            transform: translateY(0);
+        }
+
+        .tab-active {
+            color: var(--primary) !important;
+        }
+
+        .tab-active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), transparent);
+            border-radius: 3px;
+        }
+
+        /* Modern Form Controls */
+        select,
+        input[type="number"] {
+            background: var(--surface-1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--radius-1);
+            padding: 0.75rem 1rem;
+            color: var(--text-1);
+            box-shadow: var(--shadow-1);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        select:hover,
+        input[type="number"]:hover {
+            box-shadow: var(--shadow-2);
+            transform: translateY(-2px);
+        }
+
+        select:focus,
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        /* Modern Range Input */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: var(--surface-1);
+            border-radius: 3px;
+            box-shadow: var(--shadow-inset);
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: var(--shadow-1);
+            cursor: pointer;
+            border: 2px solid var(--surface-1);
+            transition: all 0.3s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: var(--shadow-2);
+        }
+
+        /* Modern Toggle Switch */
+        .toggle-checkbox {
+            display: none;
+        }
+
+        .toggle-label {
+            width: 48px;
+            height: 24px;
+            background: var(--surface-1);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            box-shadow: var(--shadow-inset);
+            transition: background 0.3s ease;
+        }
+
+        .toggle-label::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border-radius: 50%;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: var(--shadow-1);
+        }
+
+        .toggle-checkbox:checked + .toggle-label::after {
+            transform: translateX(24px);
+        }
+
+        /* Modern Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--surface-1);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-2);
+            border-radius: 4px;
+            border: 2px solid var(--surface-1);
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        /* Modern Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: var(--shadow-1);
+            }
+            50% {
+                box-shadow: 0 0 15px var(--primary);
+            }
+        }
+
+        .editor-section {
+            animation: slideIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        #renderBtn:active {
+            animation: glow 0.5s ease-in-out;
+        }
+
+        /* Modern Settings Panel */
+        .settings-panel {
+            background: var(--surface-1);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: var(--shadow-2);
+        }
+
+        /* Modern Output Preview */
+        #output {
+            background: var(--surface-1);
+            border-radius: var(--radius-1);
+            box-shadow: var(--shadow-inset);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #output:empty::before {
+            background: linear-gradient(110deg, 
+                var(--surface-1) 0%, 
+                var(--surface-2) 45%, 
+                var(--surface-1) 55%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -100% 0; }
+            100% { background-position: 100% 0; }
+        }
+    </style>
+</head>
+<body class="min-h-screen light-mode" id="theme">
+    <!-- Top Toolbar -->
+    <div class="fixed top-0 left-0 right-0 h-12 bg-white dark:bg-gray-800 border-b dark:border-gray-700 flex items-center justify-between px-4 z-10">
+        <div class="flex items-center space-x-4">
+            <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition" id="themeToggle">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                </svg>
+            </button>
+            <button class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition relative" id="uploadBtn">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                </svg>
+                <input type="file" id="fileInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".html,.css,.js">
+            </button>
+        </div>
+        <div class="flex items-center space-x-4">
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="flex h-screen pt-12">
+        <!-- Code Editor Section (Left) -->
+        <div class="w-1/2 p-4 border-r dark:border-gray-700 editor-container overflow-y-auto bg-opacity-50">
+            <div class="space-y-4">
+                <!-- Editor Tabs -->
+                <div class="flex border-b dark:border-gray-700 mb-4 space-x-4">
+                    <button class="px-6 py-3 tab-active hover:text-blue-600 transition-all" data-tab="html">HTML</button>
+                    <button class="px-6 py-3 hover:text-blue-600 transition-all" data-tab="css">CSS</button>
+                    <button class="px-6 py-3 hover:text-blue-600 transition-all" data-tab="js">JavaScript</button>
+                </div>
+
+                <!-- HTML Editor -->
+                <div class="editor-section" id="htmlSection">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="text-sm text-gray-500">Auto-preview: <input type="checkbox" id="autoPreview" checked></div>
+                    </div>
+                    <textarea id="htmlEditor"></textarea>
+                </div>
+
+                <!-- CSS Editor -->
+                <div class="editor-section hidden" id="cssSection">
+                    <textarea id="cssEditor"></textarea>
+                </div>
+
+                <!-- JavaScript Editor -->
+                <div class="editor-section hidden" id="jsSection">
+                    <textarea id="jsEditor"></textarea>
+                </div>
+
+                <!-- Console Output -->
+                <div class="mt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-medium">Console Output</label>
+                        <button class="text-sm text-gray-500 hover:text-gray-700" id="clearConsole">Clear</button>
+                    </div>
+                    <div class="console-output" id="consoleOutput"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex space-x-2">
+                    <button class="flex-1 p-3 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all flex items-center justify-center" id="renderBtn">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                        Run
+                    </button>
+                    <button class="flex-1 p-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded flex items-center justify-center" id="fullScreenBtn">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                        </svg>
+                        Full-Screen
+                    </button>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="flex-1 p-3 bg-gradient-to-r from-yellow-400 to-yellow-500 hover:from-yellow-500 hover:to-yellow-600 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all" id="downloadBtn">
+                        <span class="flex items-center justify-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                            </svg>
+                            Download
+                        </span>
+                    </button>
+                    <button class="flex-1 p-3 bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all" id="copyBtn">
+                        <span class="flex items-center justify-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                            </svg>
+                            Copy Output
+                        </span>
+                    </button>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="flex-1 p-3 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all" id="saveBtn">
+                        <span class="flex items-center justify-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                            </svg>
+                            Save to Storage
+                        </span>
+                    </button>
+                    <button class="flex-1 p-3 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all" id="loadBtn">
+                        <span class="flex items-center justify-center">
+                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+                            </svg>
+                            Load from Storage
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview Section (Right) -->
+        <div class="w-1/2 p-4 editor-container">
+            <div class="flex justify-between items-center mb-2">
+                <label class="text-sm font-medium">Preview</label>
+                <div class="flex items-center space-x-2">
+                    <select class="text-sm border rounded p-1" id="previewDevice">
+                        <option value="desktop">Desktop</option>
+                        <option value="tablet">Tablet</option>
+                        <option value="mobile">Mobile</option>
+                    </select>
+                    <div id="errorDisplay" class="text-red-500 text-sm"></div>
+                </div>
+            </div>
+            <div class="h-[90vh] border dark:border-gray-600 bg-white dark:bg-gray-700 rounded-lg overflow-auto" id="output">
+                Your rendered output will appear here.
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="shortcut-info">
+        Shortcuts: Ctrl+S - Save | Ctrl+L - Load | Ctrl+Shift+F - Format | Ctrl+R - Run | Ctrl+Space - Code Hints
+    </div>
+
+    <!-- JavaScript for Interactivity -->
+    <script>
+        // Initialize CodeMirror editors
+        const htmlEditor = CodeMirror.fromTextArea(document.getElementById('htmlEditor'), {
+            mode: 'xml',
+            theme: 'monokai',
+            lineNumbers: true,
+            autoCloseTags: true,
+            autoCloseBrackets: true,
+            extraKeys: {"Ctrl-Space": "autocomplete"},
+            indentUnit: 4,
+            tabSize: 4,
+            lineWrapping: true,
+            styleActiveLine: true
+        });
+
+        const cssEditor = CodeMirror.fromTextArea(document.getElementById('cssEditor'), {
+            mode: 'css',
+            theme: 'monokai',
+            lineNumbers: true,
+            autoCloseBrackets: true,
+            extraKeys: {"Ctrl-Space": "autocomplete"},
+            indentUnit: 4,
+            tabSize: 4,
+            lineWrapping: true,
+            styleActiveLine: true
+        });
+
+        const jsEditor = CodeMirror.fromTextArea(document.getElementById('jsEditor'), {
+            mode: 'javascript',
+            theme: 'monokai',
+            lineNumbers: true,
+            autoCloseBrackets: true,
+            extraKeys: {"Ctrl-Space": "autocomplete"},
+            indentUnit: 4,
+            tabSize: 4,
+            lineWrapping: true,
+            styleActiveLine: true
+        });
+
+        // Console Interceptor
+        const consoleOutput = document.getElementById('consoleOutput');
+        const originalConsole = window.console;
+        
+        function interceptConsole() {
+            window.console = {
+                log: function(...args) {
+                    const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' ');
+                    consoleOutput.innerHTML += `<div>${message}</div>`;
+                    originalConsole.log(...args);
+                },
+                error: function(...args) {
+                    const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' ');
+                    consoleOutput.innerHTML += `<div class="error">${message}</div>`;
+                    originalConsole.error(...args);
+                },
+                warn: function(...args) {
+                    const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' ');
+                    consoleOutput.innerHTML += `<div class="warn">${message}</div>`;
+                    originalConsole.warn(...args);
+                },
+                info: function(...args) {
+                    const message = args.map(arg => typeof arg === 'object' ? JSON.stringify(arg) : arg).join(' ');
+                    consoleOutput.innerHTML += `<div class="info">${message}</div>`;
+                    originalConsole.info(...args);
+                }
+            };
+        }
+
+        // Tab Switching
+        document.querySelectorAll('[data-tab]').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs
+                document.querySelectorAll('[data-tab]').forEach(t => t.classList.remove('tab-active'));
+                // Add active class to clicked tab
+                tab.classList.add('tab-active');
+                // Hide all sections
+                document.querySelectorAll('.editor-section').forEach(s => s.classList.add('hidden'));
+                // Show selected section
+                document.getElementById(`${tab.dataset.tab}Section`).classList.remove('hidden');
+                // Refresh CodeMirror
+                switch(tab.dataset.tab) {
+                    case 'html':
+                        htmlEditor.refresh();
+                        break;
+                    case 'css':
+                        cssEditor.refresh();
+                        break;
+                    case 'js':
+                        jsEditor.refresh();
+                        break;
+                }
+            });
+        });
+
+        // Preview Device Simulation
+        document.getElementById('previewDevice').addEventListener('change', (e) => {
+            const output = document.getElementById('output');
+            switch(e.target.value) {
+                case 'desktop':
+                    output.style.width = '100%';
+                    break;
+                case 'tablet':
+                    output.style.width = '768px';
+                    break;
+                case 'mobile':
+                    output.style.width = '375px';
+                    break;
+            }
+        });
+
+        // Clear Console
+        document.getElementById('clearConsole').addEventListener('click', () => {
+            consoleOutput.innerHTML = '';
+        });
+
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        const body = document.getElementById('theme');
+        
+        // File Upload Handler
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const content = event.target.result;
+                
+                // Determine which editor to use based on file extension
+                if (file.name.endsWith('.html')) {
+                    htmlEditor.setValue(content);
+                    // Switch to HTML tab
+                    document.querySelector('[data-tab="html"]').click();
+                } else if (file.name.endsWith('.css')) {
+                    cssEditor.setValue(content);
+                    // Switch to CSS tab
+                    document.querySelector('[data-tab="css"]').click();
+                } else if (file.name.endsWith('.js')) {
+                    jsEditor.setValue(content);
+                    // Switch to JS tab
+                    document.querySelector('[data-tab="js"]').click();
+                }
+                
+                // Clear the input to allow uploading the same file again
+                e.target.value = '';
+                
+                // Preview if auto-preview is enabled
+                if (autoPreview.checked) {
+                    renderPreview();
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Check for saved theme preference or default to light mode
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        body.className = `min-h-screen ${savedTheme}-mode`;
+        
+        themeToggle.addEventListener('click', () => {
+            const isLightMode = body.className.includes('light-mode');
+            const newTheme = isLightMode ? 'dark' : 'light';
+            body.className = `min-h-screen ${newTheme}-mode`;
+            localStorage.setItem('theme', newTheme);
+            
+            // Update CodeMirror theme if needed
+            const editorTheme = newTheme === 'dark' ? 'monokai' : document.getElementById('editorTheme').value;
+            [htmlEditor, cssEditor, jsEditor].forEach(editor => {
+                editor.setOption('theme', editorTheme);
+            });
+        });
+
+        // Auto-preview functionality
+        const autoPreview = document.getElementById('autoPreview');
+        [htmlEditor, cssEditor, jsEditor].forEach(editor => {
+            editor.on('change', () => {
+                if (autoPreview.checked) {
+                    renderPreview();
+                }
+            });
+        });
+
+        // Rendering Preview
+        function renderPreview() {
+            try {
+                const html = htmlEditor.getValue();
+                const css = `<style>${cssEditor.getValue()}</style>`;
+                const js = `<script>${jsEditor.getValue()}<\/script>`;
+                
+                // Create a new iframe for isolation
+                const frame = document.createElement('iframe');
+                frame.style.width = '100%';
+                frame.style.height = '100%';
+                frame.style.border = 'none';
+                
+                const output = document.getElementById('output');
+                output.innerHTML = '';
+                output.appendChild(frame);
+                
+                // Write content to iframe
+                const doc = frame.contentDocument || frame.contentWindow.document;
+                doc.open();
+                doc.write(css + html + js);
+                doc.close();
+                
+                // Intercept console in iframe
+                frame.contentWindow.console = window.console;
+                
+                errorDisplay.textContent = '';
+            } catch (error) {
+                handleError(error);
+            }
+        }
+
+        // Initialize
+        interceptConsole();
+        document.getElementById('renderBtn').addEventListener('click', renderPreview);
+    </script>
+</body>
+</html>
